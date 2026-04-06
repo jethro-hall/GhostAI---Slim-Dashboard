@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Send, X } from 'lucide-react';
+import { MessageSquare, Send, X, FileText, ExternalLink, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ChatPanelProps {
@@ -29,7 +29,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onToggle }) => {
         {isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 380, opacity: 1 }}
+            animate={{ height: 480, opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="w-full bg-white/85 backdrop-blur-[24px] border border-[#E2E8F0] border-b-0 rounded-t-lg shadow-[0_-10px_30px_rgba(0,0,0,0.06)] flex flex-col overflow-hidden"
@@ -47,15 +47,45 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onToggle }) => {
               </button>
             </div>
 
-            <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3">
-              <div className="self-start bg-[#F1F5F9] p-2.5 rounded-lg rounded-tl-none text-[0.8rem] max-w-[80%] text-text-main border border-[#E2E8F0]">
+            <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4">
+              <div className="self-start bg-[#F1F5F9] p-3 rounded-lg rounded-tl-none text-[0.8rem] max-w-[90%] text-text-main border border-[#E2E8F0]">
                 Hello! I'm GhostChat. How can I help you with your RAG infrastructure today?
               </div>
-              <div className="self-end bg-text-main text-white p-2.5 rounded-lg rounded-tr-none text-[0.8rem] max-w-[80%] shadow-sm">
-                Can you explain the difference between local and cloud lanes?
+              
+              <div className="self-end bg-text-main text-white p-3 rounded-lg rounded-tr-none text-[0.8rem] max-w-[90%] shadow-sm">
+                What is the current business strategy for the Brisbane branch?
               </div>
-              <div className="self-start bg-[#F1F5F9] p-2.5 rounded-lg rounded-tl-none text-[0.8rem] max-w-[80%] text-text-main border border-[#E2E8F0]">
-                Local lane uses deterministic parsers for structured data like XLSX, while cloud lane uses LLAMA_CLOUD for advanced enrichment.
+
+              <div className="self-start bg-white p-3 rounded-lg rounded-tl-none text-[0.8rem] max-w-[90%] text-text-main border border-accent-neon/20 shadow-[0_4px_12px_rgba(255,80,0,0.05)]">
+                <div className="flex items-center gap-1.5 text-accent-neon font-bold text-[0.65rem] uppercase tracking-wider mb-2">
+                  <span className="w-1.5 h-1.5 bg-accent-neon rounded-full" />
+                  Grounded Response
+                </div>
+                <p className="leading-relaxed">
+                  Based on the <strong>national_business_strategy.pdf</strong>, the Brisbane branch is currently focusing on "deterministic local parsers" for table-first XLSX ingestion to improve data accuracy in the local lane.
+                </p>
+                
+                <div className="mt-4 pt-3 border-t border-black/5">
+                  <div className="text-[0.6rem] font-bold text-text-muted uppercase tracking-wider mb-2">Provenance (2 sources)</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 bg-[#F8FAFC] rounded border border-[#E2E8F0] group cursor-pointer hover:border-accent-neon/30 transition-colors duration-200">
+                      <div className="flex items-center gap-2">
+                        <FileText size={12} className="text-text-muted" />
+                        <span className="text-[0.7rem] font-medium truncate max-w-[200px]">national_business_strategy.pdf</span>
+                        <span className="text-[0.6rem] bg-white px-1 py-0.5 rounded border border-black/5 text-text-muted">p. 14</span>
+                      </div>
+                      <ExternalLink size={10} className="text-text-muted group-hover:text-accent-neon" />
+                    </div>
+                    <div className="flex items-center justify-between p-2 bg-[#F8FAFC] rounded border border-[#E2E8F0] group cursor-pointer hover:border-accent-neon/30 transition-colors duration-200">
+                      <div className="flex items-center gap-2">
+                        <FileText size={12} className="text-text-muted" />
+                        <span className="text-[0.7rem] font-medium truncate max-w-[200px]">profit_and_loss_brisbane.xlsx</span>
+                        <span className="text-[0.6rem] bg-white px-1 py-0.5 rounded border border-black/5 text-text-muted">Sheet 1</span>
+                      </div>
+                      <ExternalLink size={10} className="text-text-muted group-hover:text-accent-neon" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

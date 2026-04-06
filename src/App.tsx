@@ -7,7 +7,11 @@ import { IngestionHistory } from './components/IngestionHistory';
 import { SyncPopup } from './components/SyncPopup';
 import { ChatPanel } from './components/ChatPanel';
 import { BackgroundOrbs } from './components/BackgroundOrbs';
-import { AppState, StagedFile, IngestionHistoryItem, SyncTask } from './types';
+import { PipelineConfigPage } from './components/PipelineConfigPage';
+import { ConnectionsPage } from './components/ConnectionsPage';
+import { KnowledgeLabPage } from './components/KnowledgeLabPage';
+import { Database } from 'lucide-react';
+import { AppState, StagedFile, IngestionHistoryItem, SyncTask, ViewType, PipelineConfig, TestResult } from './types';
 
 const INITIAL_STAGED_FILES: StagedFile[] = [
   { id: '1', name: 'profit_and_loss_-Br...20-03-20.xlsx', size: '10.0 MB', lane: 'local' },
@@ -15,8 +19,8 @@ const INITIAL_STAGED_FILES: StagedFile[] = [
 ];
 
 const INITIAL_HISTORY: IngestionHistoryItem[] = [
-  { id: 'h1', name: 'profit_and_loss_-Brisbane_2026-03-20.xlsx', lane: 'local', status: 'ready', timestamp: '2026-03-20' },
-  { id: 'h2', name: 'national_business_strategy.pdf', lane: 'local', status: 'ready', timestamp: '2026-03-19' },
+  { id: 'h1', name: 'profit_and_loss_-Brisbane_2026-03-20.xlsx', lane: 'local', status: 'ready', timestamp: '2026-03-20', chunks: 142 },
+  { id: 'h2', name: 'national_business_strategy.pdf', lane: 'local', status: 'ready', timestamp: '2026-03-19', chunks: 89 },
 ];
 
 const INITIAL_SYNC_TASKS: SyncTask[] = [
@@ -26,18 +30,55 @@ const INITIAL_SYNC_TASKS: SyncTask[] = [
   { id: 't4', label: 'Finalize', status: 'queued' },
 ];
 
+const INITIAL_CONFIG: PipelineConfig = {
+  chunkSize: 900,
+  chunkOverlap: 120,
+  windowSize: 2,
+  topK: 6,
+  rerankEnabled: false,
+  parseLanePolicy: 'local_default',
+};
+
+const MOCK_TEST_RESULT: TestResult = {
+  score: 7.2,
+  grade: 'B',
+  expectation: "High-level summaries only. Deep technical extraction will likely fail due to missing Q3 2025 projections and inconsistent section titling in the strategy docs.",
+  shortfalls: [
+    "Financials are missing Q3 2025 projections, leading to hallucination risk for future-dated queries.",
+    "Strategy documents lack standardized section headers, causing SentenceWindowNodeParser to lose context in 15% of chunks.",
+    "Provenance is missing for 20% of the 2026-03-20 XLSX data due to local lane extraction limits."
+  ],
+  solutions: [
+    "Upload the missing Q3 2025 financial projections to saturate the domain knowledge.",
+    "Switch to Cloud Lane (LlamaParse) for the strategy PDFs to preserve document structure and metadata richness.",
+    "Increase Sentence Window size to 3 for the strategy corpus to improve retrieval coherence."
+  ],
+  weightedMetrics: {
+    completeness: 65,
+    granularity: 80,
+    provenance: 70,
+    consistency: 75,
+  }
+};
+
 export default function App() {
   const [state, setState] = useState<AppState>({
+    currentView: 'knowledge',
     sidebarOpen: true,
     chatOpen: false,
     syncPopupOpen: false,
     stagedFiles: INITIAL_STAGED_FILES,
     ingestionHistory: INITIAL_HISTORY,
     syncTasks: INITIAL_SYNC_TASKS,
+    config: INITIAL_CONFIG,
+    testResult: null,
+    isTesting: false,
   });
 
   const toggleSidebar = () => setState(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }));
   const toggleChat = () => setState(prev => ({ ...prev, chatOpen: !prev.chatOpen }));
+  const setView = (view: ViewType) => setState(prev => ({ ...prev, currentView: view }));
+  const setConfig = (config: PipelineConfig) => setState(prev => ({ ...prev, config }));
   
   const handleSync = () => {
     setState(prev => ({ 
@@ -54,6 +95,13 @@ export default function App() {
       ...prev,
       stagedFiles: prev.stagedFiles.filter(f => f.id !== id)
     }));
+  };
+
+  const runTest = () => {
+    setState(prev => ({ ...prev, isTesting: true, testResult: null }));
+    setTimeout(() => {
+      setState(prev => ({ ...prev, isTesting: false, testResult: MOCK_TEST_RESULT }));
+    }, 3500);
   };
 
   // Dummy sync effect
@@ -79,41 +127,83 @@ export default function App() {
     }
   }, [state.syncPopupOpen]);
 
+  const renderView = () => {
+    switch (state.currentView) {
+      case 'knowledge':
+        return (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex gap-2 mb-4.5 max-w-[900px]">
+              <GhostCard
+                label="LOCAL LANE"
+                title="Ready"
+                description="Deterministic local parsers are ready, including table-first XLSX ingestion."
+              />
+              <GhostCard
+                label="CLOUD LANE"
+                title="Blocked"
+                description="LLAMA_CLOUD_API_KEY is not set; cloud parse enrichment is blocked."
+                borderColor="rgba(245, 158, 11, 0.5)"
+                labelColor="var(--color-warning)"
+                titleColor="var(--color-warning)"
+              />
+              <GhostCard
+                label="CHAT MODES"
+                title="Responses + Chat Completions"
+                description="Both OpenAI-compatible chat APIs are available for testing."
+              />
+            </div>
+            <UploadArea stagedFiles={state.stagedFiles} onRemove={removeStagedFile} />
+            <IngestionHistory history={state.ingestionHistory} />
+          </div>
+        );
+      case 'ingestion':
+        return (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <UploadArea stagedFiles={state.stagedFiles} onRemove={removeStagedFile} />
+            <IngestionHistory history={state.ingestionHistory} />
+          </div>
+        );
+      case 'pipelines':
+        return <PipelineConfigPage config={state.config} onChange={setConfig} />;
+      case 'connections':
+        return <ConnectionsPage />;
+      case 'testing':
+        return <KnowledgeLabPage isTesting={state.isTesting} testResult={state.testResult} onRunTest={runTest} />;
+      case 'vectors':
+        return (
+          <div className="glass p-8 rounded-xl border border-white/60 flex flex-col items-center justify-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="w-16 h-16 bg-accent-neon/10 rounded-full flex items-center justify-center mb-4">
+              <Database className="text-accent-neon" size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-text-main">Vector Storage (Qdrant)</h3>
+            <p className="text-sm text-text-muted max-w-md mt-2">
+              Monitoring collection <strong>ghostdash_knowledge</strong>. 
+              Currently indexing 231 chunks across 2 documents.
+            </p>
+            <button className="btn btn-sharp mt-6">Open Qdrant Dashboard</button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex h-screen w-full relative overflow-hidden bg-bg-main text-text-main font-sans">
       <BackgroundOrbs />
       
-      <Sidebar isOpen={state.sidebarOpen} onToggle={toggleSidebar} />
+      <Sidebar 
+        isOpen={state.sidebarOpen} 
+        onToggle={toggleSidebar} 
+        currentView={state.currentView}
+        onViewChange={setView}
+      />
 
       <main className="flex-1 flex flex-col relative z-1 min-w-0 transition-all duration-300">
         <Header onToggleSidebar={toggleSidebar} onSync={handleSync} />
 
         <div className="p-4.5 flex-1 overflow-y-auto relative">
-          {/* Ghostmoph Cards */}
-          <div className="flex gap-2 mb-4.5 max-w-[900px]">
-            <GhostCard
-              label="LOCAL LANE"
-              title="Ready"
-              description="Deterministic local parsers are ready, including table-first XLSX ingestion."
-            />
-            <GhostCard
-              label="CLOUD LANE"
-              title="Blocked"
-              description="LLAMA_CLOUD_API_KEY is not set; cloud parse enrichment is blocked."
-              borderColor="rgba(245, 158, 11, 0.5)"
-              labelColor="var(--color-warning)"
-              titleColor="var(--color-warning)"
-            />
-            <GhostCard
-              label="CHAT MODES"
-              title="Responses + Chat Completions"
-              description="Both OpenAI-compatible chat APIs are available for testing."
-            />
-          </div>
-
-          <UploadArea stagedFiles={state.stagedFiles} onRemove={removeStagedFile} />
-          
-          <IngestionHistory history={state.ingestionHistory} />
+          {renderView()}
         </div>
 
         <SyncPopup 
