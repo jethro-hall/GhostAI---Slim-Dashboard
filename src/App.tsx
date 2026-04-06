@@ -11,6 +11,7 @@ import { PipelineConfigPage } from './components/PipelineConfigPage';
 import { ConnectionsPage } from './components/ConnectionsPage';
 import { KnowledgeLabPage } from './components/KnowledgeLabPage';
 import { KnowledgeStatusPanel } from './components/KnowledgeStatusPanel';
+import { SettingsPage } from './components/SettingsPage';
 import { Database } from 'lucide-react';
 import { AppState, StagedFile, IngestionHistoryItem, SyncTask, ViewType, PipelineConfig, TestResult, KnowledgeStatus } from './types';
 
@@ -188,6 +189,8 @@ export default function App() {
         return <ConnectionsPage />;
       case 'testing':
         return <KnowledgeLabPage isTesting={state.isTesting} testResult={state.testResult} onRunTest={runTest} />;
+      case 'settings':
+        return <SettingsPage />;
       case 'vectors':
         return (
           <div className="glass p-8 rounded-xl border border-white/60 flex flex-col items-center justify-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">

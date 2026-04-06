@@ -29,7 +29,7 @@ export interface PipelineConfig {
   parseLanePolicy: 'local_default' | 'cloud_default' | 'auto';
 }
 
-export type ViewType = 'knowledge' | 'ingestion' | 'pipelines' | 'connections' | 'vectors' | 'testing';
+export type ViewType = 'knowledge' | 'ingestion' | 'pipelines' | 'connections' | 'vectors' | 'testing' | 'settings';
 
 export interface TestResult {
   score: number;

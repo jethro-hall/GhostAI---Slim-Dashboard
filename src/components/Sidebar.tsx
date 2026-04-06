@@ -104,7 +104,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentView,
       </div>
 
       <div className="mt-auto border-t border-black/5 pt-2">
-        <NavItem icon={<Settings size={14} />} label="Settings" />
+        <NavItem 
+          icon={<Settings size={14} />} 
+          label="Settings" 
+          active={currentView === 'settings'}
+          onClick={() => onViewChange('settings')}
+        />
       </div>
     </motion.aside>
   );

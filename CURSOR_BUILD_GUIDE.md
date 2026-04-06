@@ -68,7 +68,17 @@ Implement the `POST /api/audit` endpoint:
   3. Calculate weighted metrics (Completeness, Granularity, Provenance, Consistency).
   4. Generate the "10/10 Solution" roadmap.
 
-## 5. Environment Variables (.env)
+## 5. LLM Caching & Infrastructure (Redis)
+Implement a caching layer to reduce LLM costs and latency:
+- **Provider**: Redis (running as `ghoststack-redis-1`)
+- **Strategies**:
+  - **Exact Match**: Hash the prompt + parameters for 1:1 retrieval.
+  - **Semantic Cache**: Use Vector search (Qdrant) to find "similar enough" prompts (Threshold: 0.85).
+- **Security**: 
+  - AES-256 encryption for cached responses.
+  - PII scrubbing before storage.
+
+## 6. Environment Variables (.env)
 ```env
 # API Keys
 GEMINI_API_KEY=
@@ -78,15 +88,19 @@ LLAMA_CLOUD_API_KEY=
 # Infrastructure
 QDRANT_URL=http://ghoststack-rag-qdrant-1:6333
 POSTGRES_URL=postgresql://user:pass@ghoststack-postgres-1:5432/ghostdash
+REDIS_HOST=ghoststack-redis-1
+REDIS_PORT=6379
+REDIS_PASSWORD=
 
 # Defaults
 DEFAULT_POLICY_LANE=local_default
 CHUNK_SIZE=1024
 ```
 
-## 6. Implementation Steps for Cursor
+## 7. Implementation Steps for Cursor
 1. **Step 1**: Initialize LlamaIndex with Qdrant Vector Store.
 2. **Step 2**: Implement the `SentenceWindowNodeParser` logic in the ingestion service.
 3. **Step 3**: Create the FastAPI endpoints matching the specs above.
-4. **Step 4**: Connect the React frontend (in `App.tsx`) to these real endpoints using `fetch` or `axios`.
-5. **Step 5**: Implement the "Devil's Advocate" audit logic for the Knowledge Lab.
+4. **Step 4**: Implement the Redis-based LLM caching layer with Semantic Search fallback.
+5. **Step 5**: Connect the React frontend (in `App.tsx`) to these real endpoints using `fetch` or `axios`.
+6. **Step 6**: Implement the "Devil's Advocate" audit logic for the Knowledge Lab.
