@@ -68,6 +68,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentView,
 
       <div className="mb-4">
         <div className="px-3 text-[0.6rem] font-bold text-[#94A3B8] uppercase tracking-widest mb-1">
+          AGENT
+        </div>
+        <NavItem 
+          icon={<ShieldCheck size={14} />} 
+          label="Agent Config" 
+          active={currentView === 'agent'} 
+          onClick={() => onViewChange('agent')}
+        />
+      </div>
+
+      <div className="mb-4">
+        <div className="px-3 text-[0.6rem] font-bold text-[#94A3B8] uppercase tracking-widest mb-1">
           QUALITY ASSURANCE
         </div>
         <NavItem 

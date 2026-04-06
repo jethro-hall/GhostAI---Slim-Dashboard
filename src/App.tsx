@@ -12,8 +12,9 @@ import { ConnectionsPage } from './components/ConnectionsPage';
 import { KnowledgeLabPage } from './components/KnowledgeLabPage';
 import { KnowledgeStatusPanel } from './components/KnowledgeStatusPanel';
 import { SettingsPage } from './components/SettingsPage';
+import { AgentConfigPage } from './components/AgentConfigPage';
 import { Database } from 'lucide-react';
-import { AppState, StagedFile, IngestionHistoryItem, SyncTask, ViewType, PipelineConfig, TestResult, KnowledgeStatus } from './types';
+import { AppState, StagedFile, IngestionHistoryItem, SyncTask, ViewType, PipelineConfig, TestResult, KnowledgeStatus, AgentConfig } from './types';
 
 const INITIAL_STAGED_FILES: StagedFile[] = [
   { id: '1', name: 'profit_and_loss_-Br...20-03-20.xlsx', size: '10.0 MB', lane: 'local' },
@@ -56,6 +57,23 @@ const INITIAL_KNOWLEDGE_STATUS: KnowledgeStatus = {
   },
 };
 
+const INITIAL_AGENT_CONFIG: AgentConfig = {
+  id: 'agent-1',
+  name: 'GhostDASH Assistant',
+  systemPrompt: 'You are a professional business analyst assistant. Your goal is to provide accurate, data-driven insights based on the uploaded documents.',
+  firstMessage: 'Hello! I am your GhostDASH assistant. How can I help you analyze your data today?',
+  voiceId: 'v1',
+  language: 'en-US',
+  modelId: 'gpt-4-turbo',
+  temperature: 0.7,
+  maxTokens: 2000,
+  tools: [
+    { id: 't1', name: 'Web Search', description: 'Search the web for real-time information.', enabled: true },
+    { id: 't2', name: 'Code Interpreter', description: 'Run Python code for data analysis.', enabled: false },
+    { id: 't3', name: 'Knowledge Base', description: 'Query the indexed documents.', enabled: true },
+  ],
+};
+
 const MOCK_TEST_RESULT: TestResult = {
   score: 7.2,
   grade: 'B',
@@ -92,6 +110,7 @@ export default function App() {
     testResult: null,
     isTesting: false,
     knowledgeStatus: INITIAL_KNOWLEDGE_STATUS,
+    agentConfig: INITIAL_AGENT_CONFIG,
   });
 
   const toggleSidebar = () => setState(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }));
@@ -99,6 +118,7 @@ export default function App() {
   const toggleKnowledgeStatus = (open: boolean) => setState(prev => ({ ...prev, knowledgeStatusOpen: open }));
   const setView = (view: ViewType) => setState(prev => ({ ...prev, currentView: view }));
   const setConfig = (config: PipelineConfig) => setState(prev => ({ ...prev, config }));
+  const setAgentConfig = (agentConfig: AgentConfig) => setState(prev => ({ ...prev, agentConfig }));
   
   const handleSync = () => {
     setState(prev => ({ 
@@ -191,6 +211,8 @@ export default function App() {
         return <KnowledgeLabPage isTesting={state.isTesting} testResult={state.testResult} onRunTest={runTest} />;
       case 'settings':
         return <SettingsPage />;
+      case 'agent':
+        return <AgentConfigPage config={state.agentConfig} onChange={setAgentConfig} />;
       case 'vectors':
         return (
           <div className="glass p-8 rounded-xl border border-white/60 flex flex-col items-center justify-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">

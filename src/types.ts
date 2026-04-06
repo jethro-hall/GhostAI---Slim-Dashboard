@@ -29,7 +29,27 @@ export interface PipelineConfig {
   parseLanePolicy: 'local_default' | 'cloud_default' | 'auto';
 }
 
-export type ViewType = 'knowledge' | 'ingestion' | 'pipelines' | 'connections' | 'vectors' | 'testing' | 'settings';
+export type ViewType = 'knowledge' | 'ingestion' | 'pipelines' | 'connections' | 'vectors' | 'testing' | 'settings' | 'agent';
+
+export interface AgentTool {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+}
+
+export interface AgentConfig {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  firstMessage: string;
+  voiceId: string;
+  language: string;
+  modelId: string;
+  temperature: number;
+  maxTokens: number;
+  tools: AgentTool[];
+}
 
 export interface TestResult {
   score: number;
@@ -73,4 +93,5 @@ export interface AppState {
   testResult: TestResult | null;
   isTesting: boolean;
   knowledgeStatus: KnowledgeStatus;
+  agentConfig: AgentConfig;
 }
