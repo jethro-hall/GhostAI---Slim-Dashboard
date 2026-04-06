@@ -1,16 +1,18 @@
 import React from 'react';
-import { LayoutDashboard, Database, Network, FileInput, Workflow, ChevronLeft, Settings, Activity, FlaskConical, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Database, Network, FileInput, Workflow, ChevronLeft, Settings, Activity, FlaskConical, ShieldCheck, BarChart3 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { ViewType } from '../types';
+import { ViewType, KnowledgeStatus } from '../types';
 
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
+  knowledgeStatus: KnowledgeStatus;
+  onOpenStatus: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentView, onViewChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentView, onViewChange, knowledgeStatus, onOpenStatus }) => {
   return (
     <motion.aside
       initial={false}
@@ -74,6 +76,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentView,
           active={currentView === 'testing'} 
           onClick={() => onViewChange('testing')}
         />
+        
+        {/* Knowledge Status Mini-Summary */}
+        <div 
+          onClick={onOpenStatus}
+          className="mx-3 mt-2 p-2 rounded-lg bg-black/[0.03] border border-black/5 cursor-pointer hover:bg-black/[0.06] transition-all duration-200 group"
+        >
+          <div className="flex items-center gap-1.5 text-[0.55rem] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+            <BarChart3 size={10} className="text-accent-neon" />
+            Knowledge Status
+          </div>
+          <div className="space-y-0.5">
+            <div className="text-[0.65rem] font-bold text-text-main flex justify-between">
+              <span>Total Files</span>
+              <span className="text-accent-neon">{knowledgeStatus.totalFiles}</span>
+            </div>
+            <div className="text-[0.65rem] font-bold text-text-main flex justify-between">
+              <span>Index Size</span>
+              <span className="text-accent-neon">34.2k</span>
+            </div>
+            <div className="text-[0.65rem] font-bold text-text-main flex justify-between">
+              <span>Storage</span>
+              <span className="text-accent-neon">7.2MB</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="mt-auto border-t border-black/5 pt-2">

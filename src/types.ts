@@ -45,15 +45,32 @@ export interface TestResult {
   };
 }
 
+export interface KnowledgeStatus {
+  totalFiles: number;
+  breakdown: {
+    xlsx: number;
+    txt: number;
+    pdf: number;
+  };
+  totalIndexSize: number;
+  storage: {
+    db: string;
+    vectorDb: string;
+    graphRag: string;
+  };
+}
+
 export interface AppState {
   currentView: ViewType;
   sidebarOpen: boolean;
   chatOpen: boolean;
   syncPopupOpen: boolean;
+  knowledgeStatusOpen: boolean;
   stagedFiles: StagedFile[];
   ingestionHistory: IngestionHistoryItem[];
   syncTasks: SyncTask[];
   config: PipelineConfig;
   testResult: TestResult | null;
   isTesting: boolean;
+  knowledgeStatus: KnowledgeStatus;
 }

@@ -10,8 +10,9 @@ import { BackgroundOrbs } from './components/BackgroundOrbs';
 import { PipelineConfigPage } from './components/PipelineConfigPage';
 import { ConnectionsPage } from './components/ConnectionsPage';
 import { KnowledgeLabPage } from './components/KnowledgeLabPage';
+import { KnowledgeStatusPanel } from './components/KnowledgeStatusPanel';
 import { Database } from 'lucide-react';
-import { AppState, StagedFile, IngestionHistoryItem, SyncTask, ViewType, PipelineConfig, TestResult } from './types';
+import { AppState, StagedFile, IngestionHistoryItem, SyncTask, ViewType, PipelineConfig, TestResult, KnowledgeStatus } from './types';
 
 const INITIAL_STAGED_FILES: StagedFile[] = [
   { id: '1', name: 'profit_and_loss_-Br...20-03-20.xlsx', size: '10.0 MB', lane: 'local' },
@@ -37,6 +38,21 @@ const INITIAL_CONFIG: PipelineConfig = {
   topK: 6,
   rerankEnabled: false,
   parseLanePolicy: 'local_default',
+};
+
+const INITIAL_KNOWLEDGE_STATUS: KnowledgeStatus = {
+  totalFiles: 42,
+  breakdown: {
+    xlsx: 2,
+    txt: 20,
+    pdf: 20,
+  },
+  totalIndexSize: 34234,
+  storage: {
+    db: 'Postgres (7.2MB)',
+    vectorDb: 'Qdrant (3.4M vectors)',
+    graphRag: 'In-Memory (3.4M triples)',
+  },
 };
 
 const MOCK_TEST_RESULT: TestResult = {
@@ -67,16 +83,19 @@ export default function App() {
     sidebarOpen: true,
     chatOpen: false,
     syncPopupOpen: false,
+    knowledgeStatusOpen: false,
     stagedFiles: INITIAL_STAGED_FILES,
     ingestionHistory: INITIAL_HISTORY,
     syncTasks: INITIAL_SYNC_TASKS,
     config: INITIAL_CONFIG,
     testResult: null,
     isTesting: false,
+    knowledgeStatus: INITIAL_KNOWLEDGE_STATUS,
   });
 
   const toggleSidebar = () => setState(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }));
   const toggleChat = () => setState(prev => ({ ...prev, chatOpen: !prev.chatOpen }));
+  const toggleKnowledgeStatus = (open: boolean) => setState(prev => ({ ...prev, knowledgeStatusOpen: open }));
   const setView = (view: ViewType) => setState(prev => ({ ...prev, currentView: view }));
   const setConfig = (config: PipelineConfig) => setState(prev => ({ ...prev, config }));
   
@@ -197,6 +216,8 @@ export default function App() {
         onToggle={toggleSidebar} 
         currentView={state.currentView}
         onViewChange={setView}
+        knowledgeStatus={state.knowledgeStatus}
+        onOpenStatus={() => toggleKnowledgeStatus(true)}
       />
 
       <main className="flex-1 flex flex-col relative z-1 min-w-0 transition-all duration-300">
@@ -210,6 +231,12 @@ export default function App() {
           isOpen={state.syncPopupOpen} 
           onClose={closeSyncPopup} 
           tasks={state.syncTasks} 
+        />
+
+        <KnowledgeStatusPanel 
+          isOpen={state.knowledgeStatusOpen} 
+          onClose={() => toggleKnowledgeStatus(false)} 
+          status={state.knowledgeStatus}
         />
 
         <ChatPanel isOpen={state.chatOpen} onToggle={toggleChat} />
