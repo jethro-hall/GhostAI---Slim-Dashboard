@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-bg-main: #F4F5F7;
+  --color-sidebar-bg: #FFFFFF;
+  --color-text-main: #0F172A;
+  --color-text-muted: #64748B;
+  --color-accent-neon: #FF5000;
+  --color-active-bg: #FFFFFF;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  --color-success: #22C55E;
+
+  --header-height: 44px;
+  --sidebar-width: 170px;
+  --right-panel-width: 320px;
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+
+  .glass-header {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-popup {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+
+  .glass-chat {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+}
+
+body {
+  @apply bg-bg-main text-text-main font-sans antialiased overflow-hidden;
+  letter-spacing: -0.01em;
+}
+
