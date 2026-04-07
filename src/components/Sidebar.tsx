@@ -72,9 +72,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentView,
         </div>
         <NavItem 
           icon={<ShieldCheck size={14} />} 
-          label="Agent Config" 
-          active={currentView === 'agent'} 
-          onClick={() => onViewChange('agent')}
+          label="Agents" 
+          active={currentView === 'agents'} 
+          onClick={() => onViewChange('agents')}
         />
       </div>
 

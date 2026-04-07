@@ -12,7 +12,8 @@ import { ConnectionsPage } from './components/ConnectionsPage';
 import { KnowledgeLabPage } from './components/KnowledgeLabPage';
 import { KnowledgeStatusPanel } from './components/KnowledgeStatusPanel';
 import { SettingsPage } from './components/SettingsPage';
-import { AgentConfigPage } from './components/AgentConfigPage';
+import { AgentsPage } from './components/AgentsPage';
+import { AgentSettingsPanel } from './components/AgentSettingsPanel';
 import { Database } from 'lucide-react';
 import { AppState, StagedFile, IngestionHistoryItem, SyncTask, ViewType, PipelineConfig, TestResult, KnowledgeStatus, AgentConfig } from './types';
 
@@ -28,7 +29,7 @@ const INITIAL_HISTORY: IngestionHistoryItem[] = [
 
 const INITIAL_SYNC_TASKS: SyncTask[] = [
   { id: 't1', label: 'Queued', status: 'queued' },
-  { id: 't2', label: 'Parse & Structure', status: 'queued' },
+  { id: 't2', label: 'Parse Structure', status: 'queued' },
   { id: 't3', label: 'Index Retrieval', status: 'queued' },
   { id: 't4', label: 'Finalize', status: 'queued' },
 ];
@@ -60,19 +61,64 @@ const INITIAL_KNOWLEDGE_STATUS: KnowledgeStatus = {
 const INITIAL_AGENT_CONFIG: AgentConfig = {
   id: 'agent-1',
   name: 'GhostDASH Assistant',
+  status: 'live',
   systemPrompt: 'You are a professional business analyst assistant. Your goal is to provide accurate, data-driven insights based on the uploaded documents.',
   firstMessage: 'Hello! I am your GhostDASH assistant. How can I help you analyze your data today?',
   voiceId: 'v1',
-  language: 'en-US',
-  modelId: 'gpt-4-turbo',
+  expressiveMode: true,
+  languages: ['en-US'],
+  primaryModelId: 'gpt-4-turbo',
+  backupModelIds: ['gpt-4o'],
   temperature: 0.7,
   maxTokens: 2000,
   tools: [
-    { id: 't1', name: 'Web Search', description: 'Search the web for real-time information.', enabled: true },
-    { id: 't2', name: 'Code Interpreter', description: 'Run Python code for data analysis.', enabled: false },
-    { id: 't3', name: 'Knowledge Base', description: 'Query the indexed documents.', enabled: true },
+    { id: 't1', name: 'Web Search', description: 'Search the web for real-time information.', type: 'integration', enabled: true },
+    { id: 't2', name: 'Code Interpreter', description: 'Run Python code for data analysis.', type: 'integration', enabled: false },
+    { id: 't3', name: 'Knowledge Base', description: 'Query the indexed documents.', type: 'integration', enabled: true },
   ],
+  rag: {
+    enabled: true,
+    embeddingModel: 'text-embedding-3-small',
+    characterLimit: 10000,
+    chunkLimit: 10,
+    vectorDistanceLimit: 0.8,
+    candidates: 5,
+    queryRewrite: true,
+  },
+  advanced: {
+    eagerness: 'normal',
+    spellingPatience: 'auto',
+    speculativeTurn: true,
+    turnTimeout: 3,
+    endConversationTimeout: 30,
+    maxDuration: 3600,
+    maxDurationMessage: 'Conversation limit reached.',
+    softTimeout: 30,
+    cascadeTimeout: 10,
+    clientEvents: ['call.started', 'call.ended'],
+    privacy: {
+      zeroRetention: false,
+      storeAudio: true,
+      retentionPeriod: 30,
+    },
+    multimodal: {
+      chatMode: true,
+      fileAttachments: true,
+      maxFiles: 5,
+      dtmfInput: true,
+    },
+    asr: {
+      model: 'whisper-1',
+      filterBackground: true,
+      audioFormat: 'pcm_16000',
+    },
+  },
 };
+
+const INITIAL_AGENTS: AgentConfig[] = [
+  INITIAL_AGENT_CONFIG,
+  { ...INITIAL_AGENT_CONFIG, id: 'agent-2', name: 'Support Bot', status: 'draft' },
+];
 
 const MOCK_TEST_RESULT: TestResult = {
   score: 7.2,
@@ -103,6 +149,8 @@ export default function App() {
     chatOpen: false,
     syncPopupOpen: false,
     knowledgeStatusOpen: false,
+    agentSettingsOpen: false,
+    editingAgentId: null,
     stagedFiles: INITIAL_STAGED_FILES,
     ingestionHistory: INITIAL_HISTORY,
     syncTasks: INITIAL_SYNC_TASKS,
@@ -110,15 +158,45 @@ export default function App() {
     testResult: null,
     isTesting: false,
     knowledgeStatus: INITIAL_KNOWLEDGE_STATUS,
-    agentConfig: INITIAL_AGENT_CONFIG,
+    agents: INITIAL_AGENTS,
   });
 
   const toggleSidebar = () => setState(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }));
   const toggleChat = () => setState(prev => ({ ...prev, chatOpen: !prev.chatOpen }));
   const toggleKnowledgeStatus = (open: boolean) => setState(prev => ({ ...prev, knowledgeStatusOpen: open }));
+  const toggleAgentSettings = (open: boolean, agentId: string | null = null) => 
+    setState(prev => ({ ...prev, agentSettingsOpen: open, editingAgentId: agentId }));
   const setView = (view: ViewType) => setState(prev => ({ ...prev, currentView: view }));
   const setConfig = (config: PipelineConfig) => setState(prev => ({ ...prev, config }));
-  const setAgentConfig = (agentConfig: AgentConfig) => setState(prev => ({ ...prev, agentConfig }));
+  
+  const updateAgent = (agent: AgentConfig) => {
+    setState(prev => ({
+      ...prev,
+      agents: prev.agents.map(a => a.id === agent.id ? agent : a)
+    }));
+  };
+
+  const addAgent = () => {
+    const newAgent: AgentConfig = {
+      ...INITIAL_AGENT_CONFIG,
+      id: `agent-${Date.now()}`,
+      name: 'New Agent',
+      status: 'draft',
+    };
+    setState(prev => ({
+      ...prev,
+      agents: [...prev.agents, newAgent],
+      editingAgentId: newAgent.id,
+      agentSettingsOpen: true
+    }));
+  };
+
+  const deleteAgent = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      agents: prev.agents.filter(a => a.id !== id)
+    }));
+  };
   
   const handleSync = () => {
     setState(prev => ({ 
@@ -149,7 +227,7 @@ export default function App() {
     if (state.syncPopupOpen) {
       const timers: NodeJS.Timeout[] = [];
       
-      const updateTask = (index: number, status: 'done' | 'in-progress') => {
+      const updateTask = (index: number, status: SyncTask['status']) => {
         setState(prev => {
           const newTasks = [...prev.syncTasks];
           newTasks[index] = { ...newTasks[index], status };
@@ -157,11 +235,14 @@ export default function App() {
         });
       };
 
-      timers.push(setTimeout(() => updateTask(0, 'done'), 1000));
-      timers.push(setTimeout(() => updateTask(1, 'done'), 2200));
-      timers.push(setTimeout(() => updateTask(2, 'done'), 3400));
-      timers.push(setTimeout(() => updateTask(3, 'done'), 4600));
-      timers.push(setTimeout(() => closeSyncPopup(), 5500));
+      timers.push(setTimeout(() => updateTask(0, 'done'), 500));
+      timers.push(setTimeout(() => updateTask(1, 'in-progress'), 1000));
+      timers.push(setTimeout(() => updateTask(1, 'done'), 3000));
+      timers.push(setTimeout(() => updateTask(2, 'in-progress'), 3500));
+      timers.push(setTimeout(() => updateTask(2, 'done'), 5500));
+      timers.push(setTimeout(() => updateTask(3, 'in-progress'), 6000));
+      timers.push(setTimeout(() => updateTask(3, 'done'), 7500));
+      timers.push(setTimeout(() => closeSyncPopup(), 8500));
 
       return () => timers.forEach(clearTimeout);
     }
@@ -211,8 +292,15 @@ export default function App() {
         return <KnowledgeLabPage isTesting={state.isTesting} testResult={state.testResult} onRunTest={runTest} />;
       case 'settings':
         return <SettingsPage />;
-      case 'agent':
-        return <AgentConfigPage config={state.agentConfig} onChange={setAgentConfig} />;
+      case 'agents':
+        return (
+          <AgentsPage 
+            agents={state.agents} 
+            onEdit={(id) => toggleAgentSettings(true, id)} 
+            onDelete={deleteAgent}
+            onAdd={addAgent}
+          />
+        );
       case 'vectors':
         return (
           <div className="glass p-8 rounded-xl border border-white/60 flex flex-col items-center justify-center text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -262,6 +350,13 @@ export default function App() {
           isOpen={state.knowledgeStatusOpen} 
           onClose={() => toggleKnowledgeStatus(false)} 
           status={state.knowledgeStatus}
+        />
+
+        <AgentSettingsPanel 
+          isOpen={state.agentSettingsOpen} 
+          onClose={() => toggleAgentSettings(false)} 
+          agent={state.agents.find(a => a.id === state.editingAgentId) || null}
+          onSave={updateAgent}
         />
 
         <ChatPanel isOpen={state.chatOpen} onToggle={toggleChat} />
